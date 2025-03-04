@@ -1,0 +1,11 @@
+File_name
+input/DRM.csv
+
+Alpha
+0.75
+
+Color
+First appearance year
+
+Filter
+CH4 Conversion_med >= 30 and Frequency of appearances >=3

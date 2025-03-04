@@ -1,0 +1,11 @@
+File_name
+input/OCM.csv
+
+Alpha
+0.25
+
+Color
+First appearance year
+
+Filter
+C2 yield_med >= 8 and Frequency of appearances >=3
