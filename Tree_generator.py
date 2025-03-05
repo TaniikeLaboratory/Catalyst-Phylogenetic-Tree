@@ -10,8 +10,9 @@ from ete3 import Tree, TreeStyle, TextFace, NodeStyle
 from PyQt5 import QtGui
 from PIL import Image
 import matplotlib
-matplotlib.use("Agg")  # Setting for non-GUI usage
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from PIL import Image
 
 # ==================================================
 #  Reading configuration parameters from init.txt
@@ -42,13 +43,17 @@ with open(init_file, "r") as f:
 
 # Obtaining configuration parameters
 csv_file_name = init_params.get("File_name")
-alpha = float(init_params.get("Alpha", 0.5))  # Default value changed to 0.5
+alpha = float(init_params.get("Alpha", 0.5))
 color = init_params.get("Color")
 filter_condition = init_params.get("Filter")
 
-print(alpha)
+# ==================================================
+# 0) Parameters for drawing the phylogenetic tree
+# ==================================================
+tree_img = "output/tree1.png"
+final_output_file = "output/tree2.png"
+colorbar_img = "output/colorbar.png"
 
-# Other user settings
 desired_dpi = 300
 clip_value = 3000
 
@@ -204,13 +209,7 @@ df_distance = pd.DataFrame(D, index=Name_unique, columns=Name_unique)
 df_distance.to_csv("output/distance_matrix.csv")
 
 # ==================================================
-# 5) Parameters for drawing the phylogenetic tree
-# ==================================================
-tree_img = "output/tree1.png"
-final_output_file = "output/tree2.png"
-
-# ==================================================
-# 6) Apply filter and sorting
+# 5) Apply filter and sorting
 # ==================================================
 if filter_condition is not None:
     filter_expr = filter_condition.replace(" or ", " | ").replace(" and ", " & ")
@@ -233,7 +232,7 @@ label = color
 cmap_obj = plt.cm.GnBu
 
 # ==================================================
-# 7) Color mapping function and value clipping
+# 6) Color mapping function and value clipping
 # ==================================================
 def color_dict(z, scale="linear", alpha=1, cmap_obj=None):
     if cmap_obj is None:
@@ -268,7 +267,7 @@ clipped_values = list(range(min_val, max_val + 1))
 color_mapping = color_dict(clipped_values, scale="linear", alpha=0.4, cmap_obj=cmap_obj)
 
 # ==================================================
-# 8) Construction and drawing of the phylogenetic tree using the Neighbor-Joining method
+# 7) Construction and drawing of the phylogenetic tree using the Neighbor-Joining method
 # ==================================================
 names = df_distance.index.tolist()
 dm = DistanceMatrix(df_distance.values, names)
@@ -297,7 +296,6 @@ for name in name_order:
     val_clipped = min(int(val), clip_value)
     midpoint = (max(clipped_values) + min(clipped_values)) / 2
 
-    # Remove any dependency on 'Flag_min_total'; apply default text style.
     name_face = TextFace(name, fgcolor="white" if val_clipped > midpoint else "black", fsize=50, bold=True)
     if (colors := color_mapping.get(str(val_clipped))) is not None:
         name_face.background.color = colors[0]
@@ -320,7 +318,7 @@ height_px = int(8 * desired_dpi)
 t.render(tree_img, w=width_px, h=height_px, units="px", tree_style=circular_style)
 
 # ==================================================
-# 9) Create color bar and combine images
+# 8) Create color bar and combine images
 # ==================================================
 def create_colorbar(cmap_obj, values_range, filename, scale='linear',
                     orientation='vertical', height_in_pixels=1000):
@@ -336,7 +334,6 @@ def create_colorbar(cmap_obj, values_range, filename, scale='linear',
     plt.close(fig)
 
 def combine_images(tree_image_filename, colorbar_image_filename, final_image_filename):
-    from PIL import Image
     tree_image = Image.open(tree_image_filename)
     colorbar_image = Image.open(colorbar_image_filename)
     new_colorbar_width = int((colorbar_image.width / colorbar_image.height) * tree_image.height)
@@ -348,6 +345,5 @@ def combine_images(tree_image_filename, colorbar_image_filename, final_image_fil
     new_im.save(final_image_filename)
 
 tree_image = Image.open(tree_img)
-colorbar_img = "output/colorbar.png"
 create_colorbar(cmap_obj, clipped_values, colorbar_img, orientation='vertical', height_in_pixels=tree_image.height)
 combine_images(tree_img, colorbar_img, final_output_file)
